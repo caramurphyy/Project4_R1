@@ -31,44 +31,30 @@ public class SimpleExpressionParser implements ExpressionParser {
 	}
 
 	protected Expression parseExpression(String str) {
-		Expression expression;
-
-		for (int i = 0; i < str.length(); i++) {
-
-			if (str.length() <= 1) { // end must be L
-				Expression end = parseL(str);
-			}
-
-			if (str.charAt(i) == '+') {
-
-				parseS(str);
-			}
-		}
-		// TODO implement me
-		return null;
+		return parseS(str);
 	}
 
 	// try all occurances of +, try if there is S recursively before that point and
 	// an M after that point
 	protected Expression parseS(String str) { // S -> S+M || M
 		for (int i = 0; i < str.length(); i++) {
-			if ((str.substring(0, i) != null) && ((str.substring(i + 1)) != null)) { // necessary?
+			if (str.charAt(i) == '+') {
+				Expression s = parseS(str.substring(0, i));
+				Expression m = parseM(str.substring(i + 1));
+				if (s != null && m != null) {
+					AdditionExpression ae = new AdditionExpression();
+					ae.addSubexpression(s);
+					ae.addSubexpression(m);
+					s.setParent(ae);
+					m.setParent(ae);
 
-				if (str.charAt(i) == '+') {
-					Expression s = parseS(str.substring(0, i));
-					Expression m = parseM(str.substring(i + 1));
-					if (s != null && m != null) {
-						return new AdditionExpression(s, m);
-					}
+					return ae;
 				}
 			}
-		}
-		Expression m = parseM(str);
-		if (m != null) {
-			return m;
-		}
-		return null;
 
+		}
+
+		return parseM(str);
 	}
 
 	protected Expression parseM(String str) { // M -> M*P | P
@@ -78,76 +64,50 @@ public class SimpleExpressionParser implements ExpressionParser {
 				Expression p = parseP(str.substring(i + 1));
 
 				if (m != null && p != null) {
-					return new MultiplicationExpression(m, p);
+					MultiplicationExpression me = new MultiplicationExpression();
+					me.addSubexpression(m);
+					me.addSubexpression(p);
+					m.setParent(me);
+					p.setParent(me);
+					return me;
 				}
 			}
 		}
-		Expression p = parseP(str);
-		if (p != null) {
-			return p;
-		}
-
-		return null;
-
+		return parseP(str);
 	}
 
 	protected Expression parseP(String str) { // P -> (S) | L
-		for (int i = 0; i < str.length(); i++) {
-			if (str.charAt(i) == '(') {
-				for (int j = i; j < str.length(); j++) {
-					if (str.charAt(j) == ')') {
-						Expression s = parseS(str.substring(i, j));
-
-						if (s != null) {
-							return new AdditionExpression(s);
-						}
-					}
-				}
+		if (str.length() >= 2 && str.charAt(0) == '(' && str.charAt(str.length() - 1) == ')') {
+			ParentheticalExpression pe = new ParentheticalExpression();
+			Expression s = parseS(str.substring(1, str.length() - 1));
+			if (s != null) {
+				pe.addSubexpression(s);
+				s.setParent(pe);
+				return pe;
 			}
 		}
-		Expression l = parseL(str);
-		if (l != null) {
-			return l;
+
+		return parseL(str);
+	}
+
+	protected Expression parseL(String str) {
+		// integer or a character
+		if (isNumeric(str) || (str.length() == 1 && Character.isLetter(str.charAt(0)))) {
+			return new LiteralExpression(str);
 		}
-		return null;
 
+		return null;
 	}
 
-	protected Expression parseL(String str) { // L -> [a-z] | [0-9]+
-		for (int i = 0; i < str.length(); i++) {
-			if (!Character.isDigit(str.charAt(i)) || !Character.isLetter(str.charAt(i))) {
-				Expression l = parseL(str);
-				return l;
-			}
+	private static boolean isNumeric(String str) {
+		try {
+			Integer.parseInt(str);
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
 		}
-		return null;
-
 	}
 
-	protected Expression AdditionExpression(Expression s, Expression m, CompoundExpression parent) {
+	// boolean parseHelper (String str, char op, StringToBooleanFunction m1)
 
-		parent.addSubexpression(s);
-		parent.addSubexpression(m);
-
-		return parent;
-
-	}
-
-	protected Expression MultiplicationExpression(Expression m, Expression p, CompoundExpression parent) {
-		parent.addSubexpression(m);
-		parent.addSubexpression(p);
-
-		return parent;
-
-	}
-
-	protected Expression LiteralExpression(Expression l, CompoundExpression parent) {
-
-		parent.addSubexpression(l);
-
-		return parent;
-
-	}
-
-	// data parent expression
 }
