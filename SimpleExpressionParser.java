@@ -37,45 +37,13 @@ public class SimpleExpressionParser implements ExpressionParser {
 	// try all occurances of +, try if there is S recursively before that point and
 	// an M after that point
 	protected Expression parseS(String str) { // S -> S+M || M
-		for (int i = 0; i < str.length(); i++) {
-			if (str.charAt(i) == '+') {
-				Expression s = parseS(str.substring(0, i));
-				Expression m = parseM(str.substring(i + 1));
-				if (s != null && m != null) {
-					AdditionExpression ae = new AdditionExpression();
-					ae.addSubexpression(s);
-					ae.addSubexpression(m);
-					s.setParent(ae);
-					m.setParent(ae);
-					ae.flatten();
-
-					return ae;
-				}
-			}
-
-		}
-
-		return parseM(str);
+		return parseHelper(str, '+', x -> parseS(x), x -> parseM(x),
+				new AdditionExpression());
 	}
 
 	protected Expression parseM(String str) { // M -> M*P | P
-		for (int i = 0; i < str.length(); i++) {
-			if (str.charAt(i) == '*') {
-				Expression m = parseM(str.substring(0, i));
-				Expression p = parseP(str.substring(i + 1));
-
-				if (m != null && p != null) {
-					MultiplicationExpression me = new MultiplicationExpression();
-					me.addSubexpression(m);
-					me.addSubexpression(p);
-					m.setParent(me);
-					p.setParent(me);
-					me.flatten();
-					return me;
-				}
-			}
-		}
-		return parseP(str);
+		return parseHelper(str, '*', x -> parseM(x), x -> parseP(x),
+				new MultiplicationExpression());
 	}
 
 	protected Expression parseP(String str) { // P -> (S) | L
@@ -110,6 +78,24 @@ public class SimpleExpressionParser implements ExpressionParser {
 		}
 	}
 
-	// boolean parseHelper (String str, char op, StringToBooleanFunction m1)
+	Expression parseHelper(String str, char op, StringToExpressionFunction m1, StringToExpressionFunction m2,
+			CompoundExpression ce) {
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == op) {
+				Expression a = m1.apply(str.substring(0, i));
+				Expression b = m2.apply(str.substring(i + 1));
+
+				if (a != null && b != null) {
+					ce.addSubexpression(a);
+					ce.addSubexpression(b);
+					a.setParent(ce);
+					b.setParent(ce);
+					ce.flatten();
+					return ce;
+				}
+			}
+		}
+		return m2.apply(str);
+	}
 
 }
