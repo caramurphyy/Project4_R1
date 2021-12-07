@@ -47,6 +47,7 @@ public class SimpleExpressionParser implements ExpressionParser {
 					ae.addSubexpression(m);
 					s.setParent(ae);
 					m.setParent(ae);
+					ae.flatten();
 
 					return ae;
 				}
@@ -69,6 +70,7 @@ public class SimpleExpressionParser implements ExpressionParser {
 					me.addSubexpression(p);
 					m.setParent(me);
 					p.setParent(me);
+					me.flatten();
 					return me;
 				}
 			}

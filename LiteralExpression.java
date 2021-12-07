@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class LiteralExpression implements Expression {
 
     String _literal;
@@ -33,6 +35,12 @@ public class LiteralExpression implements Expression {
     @Override
     public String convertToString(int indentLevel) {
         return "\t".repeat(indentLevel) + _literal;
+    }
+
+    @Override
+    public ArrayList<Expression> getChildren() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

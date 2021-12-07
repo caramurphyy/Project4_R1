@@ -30,7 +30,21 @@ public class AdditionExpression implements CompoundExpression {
 
     @Override
     public void flatten() {
-        // TODO Auto-generated method stub
+
+        for (int i = 0; i < _children.size(); i++) {
+            final Expression parent = _children.get(i);
+            if (parent instanceof AdditionExpression) {
+                final ArrayList<Expression> children = parent.getChildren();
+
+                for (int j = 0; j < children.size(); j++) {
+                    this.addSubexpression(children.get(j));
+                }
+
+                _children.remove(parent);
+
+            }
+            parent.flatten();
+        }
 
     }
 
@@ -47,6 +61,11 @@ public class AdditionExpression implements CompoundExpression {
     @Override
     public void addSubexpression(Expression subexpression) {
         _children.add(subexpression);
+    }
+
+    @Override
+    public ArrayList<Expression> getChildren() {
+        return _children;
     }
 
 }

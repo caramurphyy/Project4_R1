@@ -28,14 +28,20 @@ public class MultiplicationExpression implements CompoundExpression {
 
     @Override
     public void flatten() {
-        // whenever a child c has a type (AdditiveExpression, MultiplicativeExpression,
-        // etc.)
-        // that is the same as the type of its parent p, you should (recursively)
-        // replace c with
-        // its own children, which thereby become children of p.
 
-        for (Expression child : _children) {
-            CompoundExpression p = child.getParent();
+        for (int i = 0; i < _children.size(); i++) {
+            final Expression parent = _children.get(i);
+            if (parent instanceof MultiplicationExpression) {
+                final ArrayList<Expression> children = parent.getChildren();
+
+                for (int j = 0; j < children.size(); j++) {
+                    this.addSubexpression(children.get(j));
+                }
+
+                _children.remove(parent);
+
+            }
+            parent.flatten();
 
         }
 
@@ -55,6 +61,11 @@ public class MultiplicationExpression implements CompoundExpression {
     public void addSubexpression(Expression subexpression) {
         _children.add(subexpression);
 
+    }
+
+    @Override
+    public ArrayList<Expression> getChildren() {
+        return _children;
     }
 
 }

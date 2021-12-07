@@ -46,4 +46,10 @@ public class ParentheticalExpression implements CompoundExpression {
         _children.add(subexpression);
     }
 
+    @Override
+    public ArrayList<Expression> getChildren() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }
