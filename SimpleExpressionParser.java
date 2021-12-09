@@ -7,7 +7,8 @@
  * L := [a-z] | [0-9]+
  */
 public class SimpleExpressionParser implements ExpressionParser {
-	/*
+
+	/**
 	 * Attempts to create an expression tree -- flattened as much as possible --
 	 * from the specified String.
 	 * Throws a ExpressionParseException if the specified string cannot be parsed.
@@ -30,22 +31,78 @@ public class SimpleExpressionParser implements ExpressionParser {
 		return expression;
 	}
 
+	/**
+	 * Parses an expressions from the specified string.
+	 * 
+	 * @param str the string to be parsed
+	 * @return Expression
+	 */
 	protected Expression parseExpression(String str) {
 		return parseS(str);
 	}
 
-	// try all occurances of +, try if there is S recursively before that point and
-	// an M after that point
+	/**
+	 * Parses the S production rule.
+	 * 
+	 * @param str
+	 * @return Expression
+	 */
 	protected Expression parseS(String str) { // S -> S+M || M
-		return parseHelper(str, '+', x -> parseS(x), x -> parseM(x),
+		return parseBinaryOperator(str, '+', x -> parseS(x), x -> parseM(x),
 				new AdditionExpression());
 	}
 
+	/**
+	 * Parses the M production rule.
+	 * 
+	 * @param str
+	 * @return Expression
+	 */
 	protected Expression parseM(String str) { // M -> M*P | P
-		return parseHelper(str, '*', x -> parseM(x), x -> parseP(x),
+		return parseBinaryOperator(str, '*', x -> parseM(x), x -> parseP(x),
 				new MultiplicationExpression());
 	}
 
+	private static interface StringToExpressionFunction {
+		Expression apply(String s);
+	}
+
+	/**
+	 * Parses a binary operator and its operands and returns a Expression object
+	 * 
+	 * @param str the string to be parsed
+	 * @param op  the operator to be parsed
+	 * @param m1  the function to parse the first operand
+	 * @param m2  the function to parse the second operand
+	 * @param ce  the Expression object to be returned
+	 * 
+	 * @return Expression returns ce with the parsed children
+	 */
+	Expression parseBinaryOperator(String str, char op, StringToExpressionFunction m1, StringToExpressionFunction m2,
+			CompoundExpression ce) {
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == op) {
+				Expression a = m1.apply(str.substring(0, i));
+				Expression b = m2.apply(str.substring(i + 1));
+
+				if (a != null && b != null) {
+					ce.addSubexpression(a);
+					ce.addSubexpression(b);
+					a.setParent(ce);
+					b.setParent(ce);
+					return ce;
+				}
+			}
+		}
+		return m2.apply(str);
+	}
+
+	/**
+	 * Parses the P production rule.
+	 * 
+	 * @param str
+	 * @return Expression
+	 */
 	protected Expression parseP(String str) { // P -> (S) | L
 		if (str.length() >= 2 && str.charAt(0) == '(' && str.charAt(str.length() - 1) == ')') {
 			ParentheticalExpression pe = new ParentheticalExpression();
@@ -60,6 +117,12 @@ public class SimpleExpressionParser implements ExpressionParser {
 		return parseL(str);
 	}
 
+	/**
+	 * Parses the L production rule.
+	 * 
+	 * @param str
+	 * @return Expression
+	 */
 	protected Expression parseL(String str) {
 		// integer or a character
 		if (isNumeric(str) || (str.length() == 1 && Character.isLetter(str.charAt(0)))) {
@@ -69,6 +132,12 @@ public class SimpleExpressionParser implements ExpressionParser {
 		return null;
 	}
 
+	/**
+	 * Checks if the specified string is numeric.
+	 * 
+	 * @param str
+	 * @return boolean
+	 */
 	private static boolean isNumeric(String str) {
 		try {
 			Integer.parseInt(str);
@@ -76,26 +145,6 @@ public class SimpleExpressionParser implements ExpressionParser {
 		} catch (NumberFormatException e) {
 			return false;
 		}
-	}
-
-	Expression parseHelper(String str, char op, StringToExpressionFunction m1, StringToExpressionFunction m2,
-			CompoundExpression ce) {
-		for (int i = 0; i < str.length(); i++) {
-			if (str.charAt(i) == op) {
-				Expression a = m1.apply(str.substring(0, i));
-				Expression b = m2.apply(str.substring(i + 1));
-
-				if (a != null && b != null) {
-					ce.addSubexpression(a);
-					ce.addSubexpression(b);
-					a.setParent(ce);
-					b.setParent(ce);
-					ce.flatten();
-					return ce;
-				}
-			}
-		}
-		return m2.apply(str);
 	}
 
 }

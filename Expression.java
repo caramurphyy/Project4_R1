@@ -60,5 +60,12 @@ interface Expression {
 		}
 	}
 
+	/**
+	 * Returns the list of children of the expression.
+	 * Implemented on Expression to simplify the logic of handling the difference
+	 * between Compound and Non-Compound Expressions.
+	 * 
+	 * @return the list of children of the expression
+	 */
 	ArrayList<Expression> getChildren();
 }
